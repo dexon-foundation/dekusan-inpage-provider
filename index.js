@@ -9,11 +9,11 @@ const ObjectMultiplex = require('obj-multiplex')
 const util = require('util')
 const SafeEventEmitter = require('safe-event-emitter')
 
-module.exports = MetamaskInpageProvider
+module.exports = DekuSanInpageProvider
 
-util.inherits(MetamaskInpageProvider, SafeEventEmitter)
+util.inherits(DekuSanInpageProvider, SafeEventEmitter)
 
-function MetamaskInpageProvider (connectionStream) {
+function DekuSanInpageProvider (connectionStream) {
   const self = this
 
   // super constructor
@@ -25,16 +25,16 @@ function MetamaskInpageProvider (connectionStream) {
     connectionStream,
     mux,
     connectionStream,
-    logStreamDisconnectWarning.bind(this, 'MetaMask')
+    logStreamDisconnectWarning.bind(this, 'DekuSan')
   )
 
-  // subscribe to metamask public config (one-way)
-  self.publicConfigStore = new LocalStorageStore({ storageKey: 'MetaMask-Config' })
+  // subscribe to dekusan public config (one-way)
+  self.publicConfigStore = new LocalStorageStore({ storageKey: 'DekuSan-Config' })
 
   pump(
-    mux.createStream('publicConfig'),
+    mux.createStream('dekuSanPublicConfig'),
     asStream(self.publicConfigStore),
-    logStreamDisconnectWarning.bind(this, 'MetaMask PublicConfigStore')
+    logStreamDisconnectWarning.bind(this, 'DekuSan PublicConfigStore')
   )
 
   // ignore phishing warning message (handled elsewhere)
@@ -46,7 +46,7 @@ function MetamaskInpageProvider (connectionStream) {
     jsonRpcConnection.stream,
     mux.createStream('provider'),
     jsonRpcConnection.stream,
-    logStreamDisconnectWarning.bind(this, 'MetaMask RpcProvider')
+    logStreamDisconnectWarning.bind(this, 'DekuSan RpcProvider')
   )
 
   // handle sendAsync requests via dapp-side rpc engine
@@ -61,14 +61,14 @@ function MetamaskInpageProvider (connectionStream) {
     self.emit('data', null, payload)
   })
 
-  // Work around for https://github.com/metamask/metamask-extension/issues/5459
+  // Work around for https://github.com/DekuSan/DekuSan-extension/issues/5459
   // drizzle accidently breaking the `this` reference
   self.send = self.send.bind(self)
   self.sendAsync = self.sendAsync.bind(self)
 }
 
 // Web3 1.0 provider uses `send` with a callback for async queries
-MetamaskInpageProvider.prototype.send = function (payload, callback) {
+DekuSanInpageProvider.prototype.send = function (payload, callback) {
   const self = this
 
   if (callback) {
@@ -80,17 +80,17 @@ MetamaskInpageProvider.prototype.send = function (payload, callback) {
 
 // handle sendAsync requests via asyncProvider
 // also remap ids inbound and outbound
-MetamaskInpageProvider.prototype.sendAsync = function (payload, cb) {
+DekuSanInpageProvider.prototype.sendAsync = function (payload, cb) {
   const self = this
 
   if (payload.method === 'eth_signTypedData') {
-    console.warn('MetaMask: This experimental version of eth_signTypedData will be deprecated in the next release in favor of the standard as defined in EIP-712. See https://git.io/fNzPl for more information on the new standard.')
+    console.warn('DekuSan: This experimental version of eth_signTypedData will be deprecated in the next release in favor of the standard as defined in EIP-712. See https://git.io/fNzPl for more information on the new standard.')
   }
 
   self.rpcEngine.handle(payload, cb)
 }
 
-MetamaskInpageProvider.prototype._sendSync = function (payload) {
+DekuSanInpageProvider.prototype._sendSync = function (payload) {
   const self = this
 
   let selectedAddress
@@ -121,8 +121,8 @@ MetamaskInpageProvider.prototype._sendSync = function (payload) {
 
     // throw not-supported Error
     default:
-      var link = 'https://github.com/MetaMask/faq/blob/master/DEVELOPERS.md#dizzy-all-async---think-of-metamask-as-a-light-client'
-      var message = `The MetaMask Web3 object does not support synchronous methods like ${payload.method} without a callback parameter. See ${link} for details.`
+      var link = 'https://github.com/MetaMask/faq/blob/master/DEVELOPERS.md#dizzy-all-async---think-of-DekuSan-as-a-light-client'
+      var message = `The DekuSan Web3 object does not support synchronous methods like ${payload.method} without a callback parameter. See ${link} for details.`
       throw new Error(message)
 
   }
@@ -135,16 +135,16 @@ MetamaskInpageProvider.prototype._sendSync = function (payload) {
   }
 }
 
-MetamaskInpageProvider.prototype.isConnected = function () {
+DekuSanInpageProvider.prototype.isConnected = function () {
   return true
 }
 
-MetamaskInpageProvider.prototype.isMetaMask = true
+DekuSanInpageProvider.prototype.isDekuSan = true
 
 // util
 
 function logStreamDisconnectWarning (remoteLabel, err) {
-  let warningMsg = `MetamaskInpageProvider - lost connection to ${remoteLabel}`
+  let warningMsg = `DekuSanInpageProvider - lost connection to ${remoteLabel}`
   if (err) warningMsg += '\n' + err.stack
   console.warn(warningMsg)
   const listeners = this.listenerCount('error')
