@@ -44,7 +44,7 @@ function DekuSanInpageProvider (connectionStream) {
   const jsonRpcConnection = createJsonRpcStream()
   pump(
     jsonRpcConnection.stream,
-    mux.createStream('provider'),
+    mux.createStream('dekuSanProvider'),
     jsonRpcConnection.stream,
     logStreamDisconnectWarning.bind(this, 'DekuSan RpcProvider')
   )
